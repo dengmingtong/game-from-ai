@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画图对比游戏</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-container">
+        <h1 class="game-title">画图对比游戏</h1>
+        <canvas id="targetCanvas" width="400" height="400"></canvas>
+        <canvas id="playerCanvas" width="400" height="400"></canvas>
+    </div>
+    <div class="controls">
+        <div class="game-info">
+            <div id="levelInfo" style="font-size: 20px;">第 1 关</div>
+            <div id="timer" style="font-size: 18px;">时间: 0秒</div>
+            <div id="currentScore" style="font-size: 18px;">当前分数: 0</div>
+        </div>
+        <div class="level-history" style="margin: 10px 0;">
+            <div id="levelHistory"></div>
+        </div>
+        <button id="checkButton">检查相似度</button>
+        <button id="restartButton">重新开始</button>
+        <div id="result"></div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
