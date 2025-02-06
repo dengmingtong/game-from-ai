@@ -1,0 +1,104 @@
+/* 继承主页的基础样式 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.home-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s;
+    text-decoration: none;
+    z-index: 1000;
+}
+
+.home-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.game-container {
+    padding: 20px;
+    color: white;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.game-title {
+    color: #fff;
+    font-size: 2.5em;
+    margin: 0 0 5px 0;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+#score {
+    font-size: 24px;
+    color: white;
+    margin-bottom: 5px;
+}
+
+#message {
+    font-size: 24px;
+    color: #ff0000;
+    height: 24px;
+    margin-bottom: 5px;
+}
+
+canvas {
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 248, 185, 0.15);
+    border-radius: 8px;
+    margin: 5px 0;
+}
+
+.button-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+button {
+    font-size: 20px;
+    padding: 10px 25px;
+    cursor: pointer;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+button:focus {
+    outline: none;
+}
+
+#restart {
+    background-color: #4CAF50;
+}
+
+#restart:hover {
+    background-color: #45a049;
+    transform: scale(1.05);
+}
+
+#nextLevel {
+    background-color: #2196F3;
+}
+
+#nextLevel:hover {
+    background-color: #1976D2;
+    transform: scale(1.05);
+} 

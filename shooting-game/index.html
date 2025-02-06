@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shooting Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-container">
+        <h1 class="game-title">Shooting Game</h1>
+        <div id="score">得分: 0 | 关卡: 1 | 剩余子弹: 10 | 剩余目标: 5</div>
+        <div id="message"></div>
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+        <div class="button-container">
+            <button id="restart">重新开始</button>
+            <button id="nextLevel">下一关</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const CANVAS_SIZE = 600;
+        const TARGET_SIZE = 45;   // 保持目标尺寸为45（原来30的1.5倍）
+        
+        // 游戏状态
+        let angle = 90; // 初始角度（垂直向上）
+        let isFired = false;
+        let bullet = { x: CANVAS_SIZE/2, y: CANVAS_SIZE-20, vx: 0, vy: 0 };
+        let targets = [];
+        let score = 0;
+        let bulletsLeft = 10; // 剩余子弹数量
+        let targetsLeft = 5;  // 剩余目标数量
+        const shootSound = new Audio('gunshot-5.wav');
+        const explodingSound = new Audio('exploding.wav');  // 添加爆炸音效
+        let currentLevel = 1;  // 当前关卡
+        const MAX_LEVEL = 3;   // 最大关卡数
+        let gameOver = false;  // 游戏结束状态
+        let currentTargetIndex = 0;  // 当前显示的目标索引
+        let allTargets = [];        // 存储所有目标
+        let activeTargets = [];     // 当前活动的目标
+        let animationFrameId = null;  // 添加在游戏状态变量区域
+
+        // 初始化目标物体
+        function initTargets(level = 1) {
+            allTargets = [];        // 重置所有目标
+            activeTargets = [];     // 重置活动目标
+            currentTargetIndex = 0; // 重置目标索引
+            bulletsLeft = 10;
+            const targetCount = 2 + level;  // 第一关3个，第二关4个，第三关5个
+            targetsLeft = targetCount;
+            score = level === 1 ? 0 : score;
+            currentLevel = level;
+            gameOver = false;
+            document.getElementById('message').textContent = '';
+            updateDisplay();
+            
+            // 生成所有目标，但先不显示
+            for(let i = 0; i < targetCount; i++) {
+                const randomSpeed = Math.random() * 0.6 + 0.6;
+                const finalSpeed = (randomSpeed + (level-1)*0.2) * (Math.random() > 0.5 ? 1 : -1);
+                
+                allTargets.push({
+                    x: Math.random()*(CANVAS_SIZE-80)+40,  // 调整边界范围，考虑更大的目标尺寸
+                    y: Math.random()*(CANVAS_SIZE/3)+50,
+                    size: TARGET_SIZE,
+                    speed: finalSpeed * 1.2
+                });
+            }
+            
+            // 只显示第一个目标
+            activeTargets.push(allTargets[0]);
+            targetsLeft = allTargets.length;
+            updateDisplay();
+        }
+
+        // 绘制发射器
+        function drawLauncher() {
+            ctx.beginPath();
+            ctx.arc(CANVAS_SIZE/2, CANVAS_SIZE-10, 12, 0, Math.PI*2);  // 稍微调整发射器大小
+            ctx.fillStyle = '#333';
+            ctx.fill();
+            
+            // 绘制炮管
+            ctx.save();
+            ctx.translate(CANVAS_SIZE/2, CANVAS_SIZE-10);
+            ctx.rotate(-angle * Math.PI/180);
+            ctx.fillRect(0, -4, 22, 8);  // 调整炮管尺寸
+            ctx.restore();
+        }
+
+        // 绘制子弹
+        function drawBullet() {
+            ctx.beginPath();
+            ctx.arc(bullet.x, bullet.y, 6, 0, Math.PI*2);  // 调整子弹大小
+            ctx.fillStyle = '#ff0000';
+            ctx.fill();
+        }
+
+        // 绘制目标物体
+        function drawTargets() {
+            activeTargets.forEach(target => {
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, target.size/2, 0, Math.PI*2);
+                ctx.fillStyle = '#00f';
+                ctx.fill();
+            });
+        }
+
+        // 碰撞检测
+        function checkCollision() {
+            for(let i = activeTargets.length-1; i >= 0; i--) {
+                const target = activeTargets[i];
+                const dx = bullet.x - target.x;
+                const dy = bullet.y - target.y;
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if(distance < target.size/2 + 5) {
+                    explodingSound.currentTime = 0;
+                    explodingSound.play();
+                    activeTargets.splice(i, 1);
+                    currentTargetIndex++;
+                    
+                    // 如果还有未显示的目标，添加下一个
+                    if (currentTargetIndex < allTargets.length) {
+                        activeTargets.push(allTargets[currentTargetIndex]);
+                    }
+                    
+                    targetsLeft = allTargets.length - currentTargetIndex;
+                    score += 10;
+                    updateDisplay();
+                    isFired = false;
+                    checkGameState();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 游戏循环
+        function gameLoop() {
+            if (!gameOver) {
+                ctx.fillStyle = '#FFFDF5'; // 更淡的黄色背景
+                ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+                
+                // 更新子弹位置
+                if(isFired) {
+                    bullet.x += bullet.vx;
+                    bullet.y += bullet.vy;
+                    
+                    // 边界碰撞检测
+                    if(bullet.x <=5 || bullet.x >= CANVAS_SIZE-5) bullet.vx *= -1;
+                    if(bullet.y <=5) bullet.vy *= -1;
+                    
+                    // 落地检测
+                    if(bullet.y >= CANVAS_SIZE-15) {
+                        isFired = false;
+                    }
+                    
+                    checkCollision();
+                }
+
+                // 更新目标位置
+                activeTargets.forEach(target => {
+                    target.x += target.speed;
+                    if(target.x < target.size/2 || target.x > CANVAS_SIZE-target.size/2) {
+                        target.speed *= -1;
+                    }
+                });
+
+                // 绘制所有元素
+                drawLauncher();
+                drawTargets();
+                if(isFired) drawBullet();
+                
+                // 存储动画帧ID
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // 添加一个停止游戏循环的函数
+        function stopGameLoop() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // 事件监听
+        document.addEventListener('keydown', (e) => {
+            if(e.code === 'ArrowLeft') {
+                angle = Math.min(130, angle + 4);
+            } else if(e.code === 'ArrowRight') {
+                angle = Math.max(50, angle - 4);
+            } else if(e.code === 'Space' && !isFired && bulletsLeft > 0) {
+                bulletsLeft--;
+                updateDisplay();
+                shootSound.currentTime = 0;
+                shootSound.play();
+                const radian = angle * Math.PI/180;
+                bullet = {
+                    x: CANVAS_SIZE/2,
+                    y: CANVAS_SIZE-20,  // 恢复原来的发射位置
+                    vx: Math.cos(radian) * 2.5,
+                    vy: -Math.sin(radian) * 2.5
+                };
+                isFired = true;
+            }
+        });
+
+        // 修改重启按钮事件监听
+        document.getElementById('restart').addEventListener('click', (e) => {
+            // 阻止按钮获得焦点
+            e.preventDefault();
+            e.target.blur();  // 移除按钮焦点
+            
+            // 先停止当前的游戏循环
+            stopGameLoop();
+            
+            // 重置所有游戏状态
+            isFired = false;
+            angle = 90;
+            bullet = { x: CANVAS_SIZE/2, y: CANVAS_SIZE-20, vx: 0, vy: 0 };
+            gameOver = false;
+            
+            // 清除任何现有的消息
+            document.getElementById('message').textContent = '';
+            
+            // 初始化第一关
+            initTargets(1);
+            
+            // 重新开始游戏循环
+            gameLoop();
+        });
+
+        // 修改下一关按钮事件监听
+        document.getElementById('nextLevel').addEventListener('click', (e) => {
+            // 阻止按钮获得焦点
+            e.preventDefault();
+            e.target.blur();  // 移除按钮焦点
+            
+            if (currentLevel < MAX_LEVEL) {
+                stopGameLoop();  // 停止当前循环
+                const nextLevel = currentLevel + 1;
+                initTargets(nextLevel);
+                gameLoop();  // 重新开始循环
+            } else {
+                document.getElementById('message').textContent = '已经是最后一关了！';
+            }
+        });
+
+        // 添加更新显示函数
+        function updateDisplay() {
+            document.getElementById('score').textContent = 
+                `得分: ${score} | 关卡: ${currentLevel} | 剩余子弹: ${bulletsLeft} | 剩余目标: ${targetsLeft}`;
+        }
+
+        // 修改checkGameState函数中的关卡切换
+        function checkGameState() {
+            if (currentTargetIndex >= allTargets.length) {
+                if (currentLevel < MAX_LEVEL) {
+                    // 进入下一关
+                    const nextLevel = currentLevel + 1;
+                    document.getElementById('message').textContent = `恭喜通过第${currentLevel}关！`;
+                    setTimeout(() => {
+                        stopGameLoop();  // 停止当前循环
+                        initTargets(nextLevel);
+                        gameLoop();  // 重新开始循环
+                    }, 1500);
+                } else {
+                    // 通关
+                    document.getElementById('message').textContent = '恭喜通关！';
+                    gameOver = true;
+                    stopGameLoop();  // 停止循环
+                }
+            } else if (bulletsLeft === 0 && !isFired) {
+                // 子弹用完但目标未清除
+                document.getElementById('message').textContent = '游戏失败！子弹用完了！';
+                gameOver = true;
+                stopGameLoop();  // 停止循环
+            }
+        }
+
+        // 初始化游戏
+        initTargets();
+        gameLoop();
+    </script>
+</body>
+</html> 
