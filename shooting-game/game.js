@@ -118,11 +118,34 @@ class Game {
         this.keys = {}; // 用于跟踪按键状态
         this.explosionSound = document.getElementById('explosionSound');
         this.shootSound = document.getElementById('shootSound');
+        this.bgMusic = document.getElementById('bgMusic');
+        this.bgMusic.volume = 0.15;  // 设置音量为30%
+        this.bgMusic.loop = true;  // 确保循环播放
+        // 直接开始播放背景音乐
+        this.bgMusic.play()
+            .then(() => console.log('背景音乐开始播放'))
+            .catch(() => {
+                // 如果自动播放失败，则等待用户交互后播放
+                console.log('自动播放失败，等待用户交互...');
+                this.playBackgroundMusic();
+            });
         this.explosionImg = new Image();
         this.explosionImg.src = 'images/explosion.png'; // 假设图片保存在images文件夹
         this.explosions = []; // 存储正在播放的爆炸效果
         this.explosionFrameWidth = 192/4;  // 每帧宽度 (4列)
         this.explosionFrameHeight = 192/4; // 每帧高度 (4行)
+        this.maxLevel = 5;  // 总关卡数
+        this.bulletsPerLevel = {  // 每关初始炮弹数
+            1: 25,
+            2: 20,
+            3: 18,
+            4: 15,
+            5: 10
+        };
+        this.remainingBullets = this.bulletsPerLevel[1];  // 剩余炮弹数
+        this.canShoot = true;  // 是否可以发射
+        this.gameMessage = '';  // 游戏消息
+        this.messageTimer = 0;  // 消息显示计时器
 
         // 初始化事件监听
         this.initEventListeners();
@@ -148,21 +171,26 @@ class Game {
 
     initTargets() {
         this.targets = [];
-        const targetCount = 5 + this.level * 2; // 随关卡增加目标数量
+        const targetCount = 10;  // 每关固定10个飞碟
         
         for (let i = 0; i < targetCount; i++) {
             this.targets.push({
                 x: Math.random() * (this.canvas.width - 100) + 50,
-                y: Math.random() * 200 + 50, // 在上方区域生成目标
-                speedX: (Math.random() - 0.5) * 4 * this.level, // 随关卡增加速度
-                speedY: (Math.random() - 0.5) * 2 * this.level,
-                width: 40,  // UFO的宽度
-                height: 24  // UFO的高度
+                y: Math.random() * 200 + 50,
+                speedX: (Math.random() - 0.5) * 3 + (this.level * 0.1),
+                speedY: (Math.random() - 0.5) * 2.5 + (this.level * 0.1),
+                width: 40,
+                height: 24
             });
         }
+        
+        // 更新UI显示
+        this.updateUI();
     }
 
     shoot() {
+        if (!this.canShoot || this.remainingBullets <= 0) return;
+        
         const muzzlePos = this.cannon.getMuzzlePosition();
         const bullet = new Bullet(
             muzzlePos.x,
@@ -171,9 +199,13 @@ class Game {
             this.bulletSpeed
         );
         this.bullets.push(bullet);
-        // 播放发射音效
-        this.shootSound.currentTime = 0; // 重置音频播放位置
+        this.remainingBullets--;
+        this.canShoot = false;  // 禁止发射直到当前炮弹消失
+        
+        this.shootSound.currentTime = 0;
         this.shootSound.play();
+        
+        this.updateUI();
     }
 
     update() {
@@ -241,6 +273,7 @@ class Game {
                     this.explosionSound.currentTime = 0;
                     this.explosionSound.play();
                     document.getElementById('score').textContent = this.score;
+                    this.updateUI();  // 更新UI显示，包括剩余飞碟数量
                     break;
                 }
             }
@@ -277,10 +310,29 @@ class Game {
             }
         }
 
+        // 检查是否可以发射
+        if (!this.canShoot && this.bullets.length === 0) {
+            this.canShoot = true;
+        }
+
+        // 检查游戏失败
+        if (this.remainingBullets <= 0 && this.bullets.length === 0 && this.targets.length > 0) {
+            this.gameOver = true;
+            this.showMessage('游戏结束！请刷新页面重新开始', 5000);
+            return;
+        }
+
         // 检查是否过关
         if (this.targets.length === 0) {
-            this.level++;
-            this.initTargets();
+            if (this.level < this.maxLevel) {
+                this.level++;
+                this.remainingBullets += this.bulletsPerLevel[this.level];  // 累加下一关的炮弹
+                this.showMessage(`恭喜通过第${this.level-1}关！`, 2000);
+                this.initTargets();
+            } else {
+                this.gameOver = true;
+                this.showMessage('恭喜通关！你是最棒的！', 5000);
+            }
         }
 
         // 更新爆炸动画
@@ -298,6 +350,25 @@ class Game {
                 }
             }
         }
+
+        // 更新消息计时器
+        if (this.messageTimer > 0) {
+            this.messageTimer -= 16;  // 假设60fps
+            if (this.messageTimer <= 0) {
+                this.gameMessage = '';
+            }
+        }
+    }
+
+    showMessage(message, duration) {
+        this.gameMessage = message;
+        this.messageTimer = duration;
+    }
+
+    updateUI() {
+        document.getElementById('level').textContent = this.level;
+        document.getElementById('bullets').textContent = this.remainingBullets;
+        document.getElementById('ufos').textContent = this.targets.length;
     }
 
     draw() {
@@ -354,16 +425,45 @@ class Game {
             );
         }
 
-        // 绘制分数和生命值
-        this.ctx.font = '20px Arial';
-        this.ctx.fillStyle = '#333';
-        this.ctx.fillText(`关卡: ${this.level}`, 10, 30);
+        // 绘制游戏消息
+        if (this.gameMessage) {
+            this.ctx.save();
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            this.ctx.fillRect(0, this.canvas.height/2 - 40, this.canvas.width, 80);
+            this.ctx.font = 'bold 36px Arial';
+            this.ctx.fillStyle = 'white';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(this.gameMessage, this.canvas.width/2, this.canvas.height/2 + 10);
+            this.ctx.restore();
+        }
+    }
+
+    playBackgroundMusic() {
+        // 在用户首次交互时播放音乐
+        const startMusic = () => {
+            if (this.bgMusic.paused) {
+                this.bgMusic.play()
+                    .then(() => console.log('背景音乐开始播放'))
+                    .catch(e => console.log('无法播放背景音乐:', e));
+            }
+            // 移除事件监听器
+            window.removeEventListener('keydown', startMusic);
+            window.removeEventListener('click', startMusic);
+        };
+
+        // 监听键盘和鼠标事件
+        window.addEventListener('keydown', startMusic);
+        window.addEventListener('click', startMusic);
     }
 
     gameLoop() {
-        this.update();
-        this.draw();
-        requestAnimationFrame(() => this.gameLoop());
+        if (!this.gameOver) {
+            this.update();
+            this.draw();
+            requestAnimationFrame(() => this.gameLoop());
+        } else {
+            this.bgMusic.pause();  // 游戏结束时停止背景音乐
+        }
     }
 }
 

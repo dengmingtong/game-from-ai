@@ -28,6 +28,44 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+.game-instructions {
+    position: fixed;
+    left: 20px;
+    top: 120px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 250px;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.game-instructions h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #FFD700;
+}
+
+.game-instructions h3 {
+    color: #FFD700;
+    margin: 15px 0 10px 0;
+}
+
+.instruction-content {
+    font-size: 14px;
+}
+
+.instruction-content ul {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+.instruction-content li {
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
 .game-container {
     padding: 20px;
     color: white;
@@ -36,6 +74,9 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    margin-left: 300px;
+    margin-right: 300px;
+    margin-top: 20px;
 }
 
 .game-title {

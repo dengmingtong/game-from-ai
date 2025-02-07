@@ -3,16 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shooting Game</title>
+    <title>大战外星人</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-instructions">
+        <h2>游戏说明</h2>
+        <div class="instruction-content">
+            <h3>操作方法：</h3>
+            <ul>
+                <li>← → 方向键：控制炮台旋转</li>
+                <li>空格键：发射炮弹</li>
+            </ul>
+            <h3>游戏规则：</h3>
+            <ul>
+                <li>共5个关卡，每关10个飞碟</li>
+                <li>击中飞碟得10分</li>
+                <li>一颗炮弹只能击毁一个飞碟</li>
+                <li>炮弹数量：</li>
+                <li>- 第1关：25颗</li>
+                <li>- 第2关：20颗</li>
+                <li>- 第3关：18颗</li>
+                <li>- 第4关：15颗</li>
+                <li>- 第5关：10颗</li>
+                <li>剩余炮弹可累积到下一关</li>
+                <li>必须等当前炮弹消失才能发射下一颗</li>
+            </ul>
+        </div>
+    </div>
     <div class="game-container">
-        <h1 class="game-title">Shooting Game</h1>
+        <h1 class="game-title">大战外星人</h1>
         <div id="game-info">
             <span>分数: <span id="score">0</span></span>
-            <span>生命值: <span id="lives">3</span></span>
+            <span>关卡: <span id="level">1</span>/5</span>
+            <span>剩余炮弹: <span id="bullets">25</span></span>
+            <span>剩余飞碟: <span id="ufos">10</span></span>
         </div>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <!-- 预加载图片 -->
@@ -26,6 +52,7 @@
         <img id="ufoImg" src="images/ufos-2orange-1-1.png" style="display: none;">
         <audio id="explosionSound" src="audios/explosion.flac" preload="auto"></audio>
         <audio id="shootSound" src="audios/shoot.wav" preload="auto"></audio>
+        <audio id="bgMusic" src="audios/bgm.wav" preload="auto" loop></audio>
     </div>
     <script src="game.js"></script>
 </body>
