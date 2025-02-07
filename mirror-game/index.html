@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirror Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-container">
+        <h1 class="game-title">Mirror Game</h1>
+        <div id="game-info">
+            <span>关卡: <span id="level">1</span></span>
+            <span>剩余镜子: <span id="mirrors-left">3</span></span>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="button-container">
+            <button id="restart">重新开始</button>
+            <button id="next-level" disabled>下一关</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
