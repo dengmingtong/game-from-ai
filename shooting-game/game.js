@@ -107,13 +107,22 @@ class Game {
         this.score = 0;
         this.lives = 3;
         this.level = 1;
-        this.ufoImg = document.getElementById('ufoImg'); // 添加UFO图片引用
+        this.backgroundImg = document.getElementById('backgroundImg');
+        this.ufoImg = document.getElementById('ufoImg');
         this.targets = [];
+        this.fallingTargets = []; // 新增：存储坠落中的目标
         this.cannon = new Cannon(this.canvas);
         this.bullets = [];
         this.bulletSpeed = 3; // 降低子弹速度，从5改为3
         this.gameOver = false;
         this.keys = {}; // 用于跟踪按键状态
+        this.explosionSound = document.getElementById('explosionSound');
+        this.shootSound = document.getElementById('shootSound');
+        this.explosionImg = new Image();
+        this.explosionImg.src = 'images/explosion.png'; // 假设图片保存在images文件夹
+        this.explosions = []; // 存储正在播放的爆炸效果
+        this.explosionFrameWidth = 192/4;  // 每帧宽度 (4列)
+        this.explosionFrameHeight = 192/4; // 每帧高度 (4行)
 
         // 初始化事件监听
         this.initEventListeners();
@@ -158,10 +167,13 @@ class Game {
         const bullet = new Bullet(
             muzzlePos.x,
             muzzlePos.y,
-            this.cannon.angle + Math.PI,  // 添加 Math.PI（180度）来反转方向
+            this.cannon.angle + Math.PI,
             this.bulletSpeed
         );
         this.bullets.push(bullet);
+        // 播放发射音效
+        this.shootSound.currentTime = 0; // 重置音频播放位置
+        this.shootSound.play();
     }
 
     update() {
@@ -199,18 +211,55 @@ class Game {
                 const target = this.targets[j];
                 const bullet = this.bullets[i];
                 
-                // 使用矩形碰撞检测
                 if (bullet.x < target.x + target.width/2 &&
                     bullet.x > target.x - target.width/2 &&
                     bullet.y < target.y + target.height/2 &&
                     bullet.y > target.y - target.height/2) {
-                    // 击中目标
+                    // 添加爆炸效果
+                    this.explosions.push({
+                        x: target.x,
+                        y: target.y,
+                        frame: 0,
+                        maxFrame: 16, // 4x4 = 16帧
+                        frameTime: 0,
+                        frameInterval: 50 // 每50ms更新一帧
+                    });
+
+                    // 击中目标，添加到坠落数组
+                    const fallingTarget = {
+                        ...target,
+                        rotation: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.2, // 随机旋转速度
+                        speedX: target.speedX * 0.5 + bullet.speed * Math.cos(bullet.angle) * 0.3, // 继承部分子弹速度
+                        speedY: target.speedY * 0.5 + bullet.speed * Math.sin(bullet.angle) * 0.3 + 2, // 向下坠落
+                        opacity: 1
+                    };
+                    this.fallingTargets.push(fallingTarget);
                     this.targets.splice(j, 1);
                     this.bullets.splice(i, 1);
                     this.score += 10;
+                    this.explosionSound.currentTime = 0;
+                    this.explosionSound.play();
                     document.getElementById('score').textContent = this.score;
                     break;
                 }
+            }
+        }
+
+        // 更新坠落中的目标
+        for (let i = this.fallingTargets.length - 1; i >= 0; i--) {
+            const target = this.fallingTargets[i];
+            
+            // 更新位置
+            target.x += target.speedX;
+            target.y += target.speedY;
+            target.speedY += 0.2; // 重力加速度
+            target.rotation += target.rotationSpeed;
+            target.opacity -= 0.01; // 逐渐消失
+
+            // 如果完全透明或超出画布，则移除
+            if (target.opacity <= 0 || target.y > this.canvas.height + target.height) {
+                this.fallingTargets.splice(i, 1);
             }
         }
 
@@ -233,12 +282,27 @@ class Game {
             this.level++;
             this.initTargets();
         }
+
+        // 更新爆炸动画
+        for (let i = this.explosions.length - 1; i >= 0; i--) {
+            const explosion = this.explosions[i];
+            explosion.frameTime += 16; // 假设60fps，约16ms每帧
+
+            if (explosion.frameTime >= explosion.frameInterval) {
+                explosion.frame++;
+                explosion.frameTime = 0;
+
+                // 动画播放完毕，移除爆炸效果
+                if (explosion.frame >= explosion.maxFrame) {
+                    this.explosions.splice(i, 1);
+                }
+            }
+        }
     }
 
     draw() {
-        // 清空画布
-        this.ctx.fillStyle = '#F0F7FF';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // 绘制背景
+        this.ctx.drawImage(this.backgroundImg, 0, 0, this.canvas.width, this.canvas.height);
 
         // 绘制UFO目标
         for (const target of this.targets) {
@@ -258,6 +322,37 @@ class Game {
 
         // 绘制炮台
         this.cannon.draw();
+
+        // 绘制坠落中的目标
+        for (const target of this.fallingTargets) {
+            this.ctx.save();
+            this.ctx.translate(target.x, target.y);
+            this.ctx.rotate(target.rotation);
+            this.ctx.globalAlpha = target.opacity;
+            this.ctx.drawImage(
+                this.ufoImg,
+                -target.width/2,
+                -target.height/2,
+                target.width,
+                target.height
+            );
+            this.ctx.restore();
+        }
+
+        // 绘制爆炸效果
+        for (const explosion of this.explosions) {
+            const frameX = (explosion.frame % 4) * this.explosionFrameWidth;
+            const frameY = Math.floor(explosion.frame / 4) * this.explosionFrameHeight;
+            
+            this.ctx.drawImage(
+                this.explosionImg,
+                frameX, frameY,
+                this.explosionFrameWidth, this.explosionFrameHeight,
+                explosion.x - this.explosionFrameWidth/2,
+                explosion.y - this.explosionFrameHeight/2,
+                this.explosionFrameWidth, this.explosionFrameHeight
+            );
+        }
 
         // 绘制分数和生命值
         this.ctx.font = '20px Arial';
