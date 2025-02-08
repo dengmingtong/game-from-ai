@@ -8,18 +8,36 @@
 </head>
 <body>
     <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-instructions">
+        <h2>游戏说明</h2>
+        <ul>
+            <li>目标：调整左侧图形使其与右侧目标图形尽可能相似</li>
+            <li>操作方法：
+                <ul>
+                    <li>拖动蓝色点：移动顶点</li>
+                    <li>拖动绿色点：在边上添加新顶点</li>
+                    <li>双击顶点：删除该顶点</li>
+                </ul>
+            </li>
+            <li>通关条件：相似度达到95%以上</li>
+            <li>时间限制：每关120秒</li>
+            <li>总共15关，难度逐渐提升</li>
+        </ul>
+    </div>
     <div class="game-container">
         <h1 class="game-title">图形还原</h1>
         <div id="game-info">
-            <span>关卡: <span id="level">1</span>/5</span>
+            <span>关卡: <span id="level">1</span>/15</span>
             <span>时间: <span id="timer">0</span>秒</span>
             <span>分数: <span id="score">0</span></span>
         </div>
         <div class="canvas-container">
             <div class="canvas-box">
+                <div class="canvas-title">可编辑图形</div>
                 <canvas id="playerCanvas" width="400" height="400"></canvas>
             </div>
             <div class="canvas-box">
+                <div class="canvas-title">目标图形</div>
                 <canvas id="targetCanvas" width="400" height="400"></canvas>
             </div>
         </div>

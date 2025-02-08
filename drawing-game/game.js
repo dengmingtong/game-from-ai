@@ -13,14 +13,32 @@ class ShapeGame {
         this.prevButton = document.getElementById('prevButton');
         this.nextButton = document.getElementById('nextButton');
         
-        // 添加关卡设置
+        // 修改关卡设置
         this.currentLevel = 1;
         this.levelConfigs = [
-            { edges: 6, variance: 0.3, allowConcave: false },  // 第一关：6边形，变化较小
-            { edges: 7, variance: 0.35, allowConcave: false }, // 第二关：7边形
-            { edges: 8, variance: 0.4, allowConcave: false },  // 第三关：8边形
-            { edges: 7, variance: 0.4, allowConcave: true },   // 第四关：7边形，可凹
-            { edges: 8, variance: 0.45, allowConcave: true }   // 第五关：8边形，可凹
+            // 5边形关卡
+            { edges: 5, variance: 0.3, allowConcave: false },  // 第1关：简单5边形
+            { edges: 5, variance: 0.35, allowConcave: true },  // 第2关：可凹5边形
+            // 6边形关卡
+            { edges: 6, variance: 0.35, allowConcave: false }, // 第3关：简单6边形
+            { edges: 6, variance: 0.4, allowConcave: true },   // 第4关：可凹6边形
+            // 7边形关卡
+            { edges: 7, variance: 0.4, allowConcave: false },  // 第5关：简单7边形
+            { edges: 7, variance: 0.45, allowConcave: true },  // 第6关：可凹7边形
+            // 8边形关卡
+            { edges: 8, variance: 0.45, allowConcave: false }, // 第7关：简单8边形
+            { edges: 8, variance: 0.5, allowConcave: true },   // 第8关：可凹8边形
+            // 9边形关卡
+            { edges: 9, variance: 0.5, allowConcave: false },  // 第9关：简单9边形
+            { edges: 9, variance: 0.55, allowConcave: true },  // 第10关：可凹9边形
+            // 10边形关卡
+            { edges: 10, variance: 0.55, allowConcave: false }, // 第11关：简单10边形
+            { edges: 10, variance: 0.6, allowConcave: true },   // 第12关：可凹10边形
+            // 11边形关卡
+            { edges: 11, variance: 0.6, allowConcave: false },  // 第13关：简单11边形
+            { edges: 11, variance: 0.65, allowConcave: true },  // 第14关：可凹11边形
+            // 12边形关卡
+            { edges: 12, variance: 0.65, allowConcave: true }   // 第15关：可凹12边形
         ];
 
         // 添加计时和分数
@@ -39,6 +57,7 @@ class ShapeGame {
             {x: center - size/2, y: center + size/2}
         ];
 
+        this.showControls = true;  // 默认显示控制点
         this.selectedPoint = null;
         this.targetShape = [];
 
@@ -49,6 +68,10 @@ class ShapeGame {
         this.maxTime = 120;
         this.isTimerStarted = false;
         this.isGameActive = false;  // 添加游戏活动状态标志
+        
+        // 初始化音效
+        this.congratsSound = new Audio('audios/congrats.wav');
+        this.wrongSound = new Audio('audios/wrong.mp3');
         
         // 初始化事件监听
         this.setupEventListeners();
@@ -63,7 +86,7 @@ class ShapeGame {
         this.timerInterval = setInterval(() => {
             const elapsed = Math.floor((Date.now() - this.startTime) / 1000);
             if (elapsed >= this.maxTime) {
-                this.gameOver('时间超过120秒，游戏结束！');
+                this.gameOver('时间到！本关未通过，请重新开始或选择其他关卡');
                 return;
             }
             this.timerDisplay.textContent = elapsed;
@@ -118,6 +141,12 @@ class ShapeGame {
         // 绘制图形
         this.drawTargetShape();
         this.drawPlayerShape();
+        
+        // 重置音效
+        this.resetSound(this.congratsSound);
+        this.resetSound(this.wrongSound);
+        
+        this.showControls = true;  // 保持控制点显示
     }
 
     updateLevelInfo() {
@@ -129,15 +158,15 @@ class ShapeGame {
         const centerX = 200;
         const centerY = 200;
         const config = this.levelConfigs[this.currentLevel - 1];
-        const radius = 85;  // 稍微减小基础半径，因为我们增加了缩放比例
+        const radius = 85;
 
         for (let i = 0; i < config.edges; i++) {
             const angle = (Math.PI * 2 * i) / config.edges;
             let variance = 1 - (Math.random() * config.variance);
             
-            // 如果允许凹形，则有25%的概率产生凹点
-            if (config.allowConcave && Math.random() < 0.25) {
-                variance = 0.4 + (Math.random() * 0.3); // 40%-70%的半径，产生凹点
+            // 如果允许凹形，则有40%的概率产生凹点
+            if (config.allowConcave && Math.random() < 0.4) {
+                variance = 0.3 + (Math.random() * 0.4); // 30%-70%的半径，产生更明显的凹点
             }
             
             const x = centerX + Math.cos(angle) * radius * variance;
@@ -199,6 +228,9 @@ class ShapeGame {
     }
 
     drawControlPoints() {
+        // 只在显示控制点时绘制
+        if (!this.showControls) return;
+        
         // 应用相同的缩放变换来绘制控制点
         this.playerCtx.save();
         this.playerCtx.translate(200, 200);
@@ -229,6 +261,7 @@ class ShapeGame {
         this.playerCanvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
         this.playerCanvas.addEventListener('mouseup', () => this.selectedPoint = null);
         this.playerCanvas.addEventListener('dblclick', this.handleDoubleClick.bind(this));
+        this.playerCanvas.addEventListener('mousemove', this.handleMouseOver.bind(this));
         this.checkButton.addEventListener('click', this.checkSimilarity.bind(this));
         this.restartButton.addEventListener('click', this.restart.bind(this));
         this.prevButton.addEventListener('click', this.prevLevel.bind(this));
@@ -281,6 +314,15 @@ class ShapeGame {
         x = (x - 200) / 1.4 + 200;
         y = (y - 200) / 1.4 + 200;
 
+        // 检查是否点击在图形内部
+        if (!this.isPointInShape(x, y, this.squarePoints)) {
+            this.showControls = false;
+            this.drawPlayerShape();
+            return;
+        } else {
+            this.showControls = true;
+        }
+
         // 防止双击事件触发时也触发拖动
         if (this.lastClickTime && (Date.now() - this.lastClickTime) < 300) {
             this.lastClickTime = Date.now();
@@ -325,6 +367,25 @@ class ShapeGame {
         this.drawPlayerShape();
     }
 
+    handleMouseOver(e) {
+        if (!this.isGameActive || !this.isTimerStarted) return;
+        
+        const rect = this.playerCanvas.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY - rect.top;
+        
+        x = (x - 200) / 1.4 + 200;
+        y = (y - 200) / 1.4 + 200;
+        
+        // 当鼠标移动到图形内部时显示控制点
+        if (this.isPointInShape(x, y, this.squarePoints)) {
+            if (!this.showControls) {
+                this.showControls = true;
+                this.drawPlayerShape();
+            }
+        }
+    }
+
     restart() {
         this.currentLevel = 1;
         this.currentScore = 0;
@@ -334,7 +395,7 @@ class ShapeGame {
     }
 
     nextLevel() {
-        if (this.currentLevel < 5) {
+        if (this.currentLevel < 15) {
             this.currentLevel++;
             this.resultDiv.textContent = '';
             this.init();  // init 会处理所有重置操作
@@ -380,10 +441,13 @@ class ShapeGame {
         if (similarityPercent >= 95) {
             resultText += "\n恭喜通过！";
             resultDiv.classList.add('success');
+            this.congratsSound.play();  // 播放成功音效
             setTimeout(() => this.nextLevel(), 1000);
         } else {
             resultText += "\n未达到95%相似度，请继续尝试";
             resultDiv.classList.add('fail');
+            this.wrongSound.play();  // 播放失败音效
+            this.isTimerStarted = false;
         }
         
         resultDiv.textContent = resultText;
@@ -418,13 +482,21 @@ class ShapeGame {
 
     gameOver(message) {
         this.stopTimer();
+        const resultDiv = document.getElementById('result');
+        resultDiv.className = 'result-display';
+        resultDiv.classList.add('fail');
         this.resultDiv.textContent = message;
+        void resultDiv.offsetWidth;
+        resultDiv.classList.add('show');
         this.checkButton.disabled = true;
+        this.isGameActive = false;
+        this.isTimerStarted = false;
+        this.wrongSound.play();  // 播放失败音效
     }
 
     updateButtonStates() {
         this.prevButton.disabled = this.currentLevel <= 1;
-        this.nextButton.disabled = this.currentLevel >= 5;
+        this.nextButton.disabled = this.currentLevel >= 15;
     }
 
     prevLevel() {
@@ -433,6 +505,25 @@ class ShapeGame {
             this.resultDiv.textContent = '';
             this.init();  // init 会处理所有重置操作
         }
+    }
+
+    // 重置音效（在需要重新播放同一个音效时调用）
+    resetSound(sound) {
+        sound.pause();
+        sound.currentTime = 0;
+    }
+
+    isPointInShape(x, y, points) {
+        let inside = false;
+        for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+            const xi = points[i].x, yi = points[i].y;
+            const xj = points[j].x, yj = points[j].y;
+            
+            const intersect = ((yi > y) !== (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
     }
 }
 
