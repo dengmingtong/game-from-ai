@@ -3,28 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drawing Game</title>
+    <title>图形还原</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <a href="../index.html" class="home-button">返回首页</a>
     <div class="game-container">
-        <h1 class="game-title">Drawing Game</h1>
-        <canvas id="targetCanvas" width="400" height="400"></canvas>
-        <canvas id="playerCanvas" width="400" height="400"></canvas>
-    </div>
-    <div class="controls">
-        <div class="game-info">
-            <div id="levelInfo" style="font-size: 20px;">第 1 关</div>
-            <div id="timer" style="font-size: 18px;">时间: 0秒</div>
-            <div id="currentScore" style="font-size: 18px;">当前分数: 0</div>
+        <h1 class="game-title">图形还原</h1>
+        <div id="game-info">
+            <span>关卡: <span id="level">1</span>/5</span>
+            <span>时间: <span id="timer">0</span>秒</span>
+            <span>分数: <span id="score">0</span></span>
         </div>
-        <div class="level-history" style="margin: 10px 0;">
-            <div id="levelHistory"></div>
+        <div class="canvas-container">
+            <div class="canvas-box">
+                <canvas id="playerCanvas" width="400" height="400"></canvas>
+            </div>
+            <div class="canvas-box">
+                <canvas id="targetCanvas" width="400" height="400"></canvas>
+            </div>
         </div>
-        <button id="checkButton">检查相似度</button>
-        <button id="restartButton">重新开始</button>
-        <div id="result"></div>
+        <div class="button-container">
+            <button id="prevButton" disabled>上一关</button>
+            <button id="checkButton">检查相似度</button>
+            <button id="restartButton">重新开始</button>
+            <button id="nextButton" disabled>下一关</button>
+        </div>
+        <div id="result" class="result-display"></div>
     </div>
     <script src="game.js"></script>
 </body>
