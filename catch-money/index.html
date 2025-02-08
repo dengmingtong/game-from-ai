@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>接红包</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-instructions">
+        <h2>游戏说明</h2>
+        <ul>
+            <li>目标：用盘子接住掉落的红包</li>
+            <li>操作：
+                <ul>
+                    <li>移动鼠标控制盘子左右移动</li>
+                    <li>每接到一个红包得100元</li>
+                </ul>
+            </li>
+            <li>注意：
+                <ul>
+                    <li>避开掉落的寒假作业</li>
+                    <li>接到作业会被冻结5秒</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="game-container">
+        <h1 class="game-title">接红包</h1>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="game-info">
+            <button id="start-game">开始游戏</button>
+            <button id="restart" style="display: none;">重新开始</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
