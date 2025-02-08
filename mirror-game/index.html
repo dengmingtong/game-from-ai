@@ -8,6 +8,33 @@
 </head>
 <body>
     <a href="../index.html" class="home-button">返回首页</a>
+    <div class="game-instructions">
+        <h2>游戏说明</h2>
+        <ul>
+            <li>目标：使用镜子反射光线击中目标（吸血鬼）</li>
+            <li>操作方法：
+                <ul>
+                    <li>点击画布放置镜子</li>
+                    <li>拖动镜子调整位置</li>
+                    <li>拖动镜子末端的橙色圆点调整角度</li>
+                </ul>
+            </li>
+            <li>游戏规则：
+                <ul>
+                    <li>每局游戏有5面镜子可用</li>
+                    <li>光线会被骷髅障碍物阻挡</li>
+                    <li>需要合理放置镜子，让光线绕过障碍物</li>
+                    <li>成功击中目标后，吸血鬼会消失</li>
+                </ul>
+            </li>
+            <li>提示：
+                <ul>
+                    <li>光线的初始角度是随机的</li>
+                    <li>可以随时点击"重新开始"重置游戏</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
     <div class="game-container">
         <h1 class="game-title">Mirror Game</h1>
         <div id="game-info">
@@ -17,7 +44,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div class="button-container">
             <button id="restart">重新开始</button>
-            <button id="next-level" disabled>下一关</button>
+            <button id="start-game">开始游戏</button>
         </div>
     </div>
     <script src="game.js"></script>
