@@ -177,8 +177,8 @@ class Game {
             this.targets.push({
                 x: Math.random() * (this.canvas.width - 100) + 50,
                 y: Math.random() * 200 + 50,
-                speedX: (Math.random() - 0.5) * 3 + (this.level * 0.1),
-                speedY: (Math.random() - 0.5) * 2.5 + (this.level * 0.1),
+                speedX: (Math.random() - 0.5) * 3 + (this.level * 0.2),
+                speedY: (Math.random() - 0.5) * 2.5 + (this.level * 0.2),
                 width: 40,
                 height: 24
             });
