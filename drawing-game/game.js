@@ -314,22 +314,6 @@ class ShapeGame {
         x = (x - 200) / 1.4 + 200;
         y = (y - 200) / 1.4 + 200;
 
-        // 检查是否点击在图形内部
-        if (!this.isPointInShape(x, y, this.squarePoints)) {
-            this.showControls = false;
-            this.drawPlayerShape();
-            return;
-        } else {
-            this.showControls = true;
-        }
-
-        // 防止双击事件触发时也触发拖动
-        if (this.lastClickTime && (Date.now() - this.lastClickTime) < 300) {
-            this.lastClickTime = Date.now();
-            return;
-        }
-        this.lastClickTime = Date.now();
-
         // 检查是否点击了顶点
         this.squarePoints.forEach(point => {
             if (Math.hypot(point.x - x, point.y - y) < 8) {
@@ -368,22 +352,7 @@ class ShapeGame {
     }
 
     handleMouseOver(e) {
-        if (!this.isGameActive || !this.isTimerStarted) return;
-        
-        const rect = this.playerCanvas.getBoundingClientRect();
-        let x = e.clientX - rect.left;
-        let y = e.clientY - rect.top;
-        
-        x = (x - 200) / 1.4 + 200;
-        y = (y - 200) / 1.4 + 200;
-        
-        // 当鼠标移动到图形内部时显示控制点
-        if (this.isPointInShape(x, y, this.squarePoints)) {
-            if (!this.showControls) {
-                this.showControls = true;
-                this.drawPlayerShape();
-            }
-        }
+        return;
     }
 
     restart() {
