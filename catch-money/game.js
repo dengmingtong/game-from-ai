@@ -58,6 +58,27 @@ class Game {
         this.lastSpawnTime = 0;
         this.spawnInterval = 400;  // 生成间隔减半，增加频率
         
+        // 添加大红包的图片
+        this.bigMoneyImg = new Image();
+        this.bigMoneyImg.src = 'images/money.png';  // 使用同样的图片，我们会在渲染时放大
+        
+        // 修改红包生成的概率和奖励
+        this.MONEY_TYPES = {
+            NORMAL: {
+                probability: 0.9,  // 90%概率是普通红包
+                reward: 100,
+                size: 50
+            },
+            BIG: {
+                probability: 0.1,  // 10%概率是大红包
+                reward: 500,
+                size: 100  // 大红包尺寸是普通红包的两倍
+            }
+        };
+        
+        // 修改作业的惩罚值
+        this.HOMEWORK_PENALTY = -200;  // 原来是-100，现在翻倍
+        
         // 初始化时绘制一次画面
         this.draw();
     }
@@ -97,20 +118,37 @@ class Game {
         if (!this.gameStarted) return;
         const now = Date.now();
         if (now - this.lastSpawnTime > this.spawnInterval) {
-            // 90%概率生成红包，10%概率生成作业
-            const isHomework = Math.random() < 0.1;
+            // 70%概率生成普通红包，10%概率生成大红包，20%概率生成作业
+            const random = Math.random();
+            let itemType;
+            let itemSize;
+            let reward;
+            
+            if (random < 0.2) {  // 增加作业概率到20%
+                itemType = 'homework';
+                itemSize = 50;
+            } else if (random < 0.3) {
+                itemType = 'bigRedPacket';  // 大红包
+                itemSize = 100;  // 两倍大小
+                reward = 500;
+            } else {
+                itemType = 'redPacket';  // 普通红包
+                itemSize = 50;
+                reward = 100;
+            }
             
             this.items.push({
-                x: Math.random() * (this.canvas.width - 30),
-                y: -30,
-                width: 50,   // 物品宽度翻倍
-                height: 50,  // 物品高度翻倍
-                speed: (2.5 + Math.random() * 1.5),  // 速度减半
-                type: isHomework ? 'homework' : 'redPacket'
+                x: Math.random() * (this.canvas.width - itemSize),
+                y: -itemSize,
+                width: itemSize,
+                height: itemSize,
+                speed: (2.5 + Math.random() * 1.5),
+                type: itemType,
+                reward: reward
             });
             
             this.lastSpawnTime = now;
-            this.spawnInterval = 400;  // 保持较快的生成频率
+            this.spawnInterval = 400;
         }
     }
 
@@ -138,8 +176,8 @@ class Game {
                 item.x + item.width > this.plate.x - this.plate.width/2 &&
                 item.x < this.plate.x + this.plate.width/2) {
                 
-                if (item.type === 'redPacket') {
-                    this.money += 100;
+                if (item.type === 'redPacket' || item.type === 'bigRedPacket') {
+                    this.money += item.reward;  // 使用物品自带的奖励值
                     // 播放接到红包的音效
                     this.sounds.correct.currentTime = 0;
                     this.sounds.correct.play().catch(e => console.log('音效播放失败:', e));
@@ -249,11 +287,17 @@ class Game {
 
         // 绘制物品
         for (const item of this.items) {
-            const img = item.type === 'redPacket' ? 
-                this.images.redPacket : this.images.homework;
+            let img;
+            if (item.type === 'homework') {
+                img = this.images.homework;
+            } else {
+                // 无论是普通红包还是大红包都使用相同的图片
+                img = this.images.redPacket;
+            }
+            
             // 如果图片加载失败，绘制简单的替代形状
             if (!img.complete || img.naturalWidth === 0) {
-                this.ctx.fillStyle = item.type === 'redPacket' ? 'red' : 'blue';
+                this.ctx.fillStyle = item.type.includes('redPacket') ? 'red' : 'blue';
                 this.ctx.fillRect(item.x, item.y, item.width, item.height);
             } else {
                 this.ctx.drawImage(img, item.x, item.y, item.width, item.height);
@@ -280,6 +324,47 @@ class Game {
         this.updateItems();
         this.draw();
         requestAnimationFrame(() => this.gameLoop());
+    }
+
+    generateMoney() {
+        const random = Math.random();
+        const type = random < this.MONEY_TYPES.BIG.probability ? 'BIG' : 'NORMAL';
+        const config = this.MONEY_TYPES[type];
+        
+        return {
+            x: Math.random() * (this.canvas.width - config.size),
+            y: -config.size,
+            type: type,
+            width: config.size,
+            height: config.size,
+            speed: Math.random() * 2 + 1
+        };
+    }
+
+    drawMoney(money) {
+        const img = this.bigMoneyImg;  // 使用同一个图片
+        this.ctx.drawImage(
+            img,
+            money.x,
+            money.y,
+            money.width,
+            money.height
+        );
+    }
+
+    checkCollision(money) {
+        if (
+            this.player.x < money.x + money.width &&
+            this.player.x + this.player.width > money.x &&
+            this.player.y < money.y + money.height &&
+            this.player.y + this.player.height > money.y
+        ) {
+            // 根据红包类型给予不同的奖励
+            const reward = this.MONEY_TYPES[money.type].reward;
+            this.score += reward;
+            return true;
+        }
+        return false;
     }
 }
 
